@@ -98,12 +98,13 @@ void postAnalyzer::Loop(Long64_t maxEvents, int reportEvery)
   nTotal = nentriesToCheck;
   Long64_t nbytes = 0, nb = 0;
 
-int count1=0;
-int count2=0;
-int count3=0;
   std::cout<<"Running over "<<nTotal<<" events."<<std::endl;
   TStopwatch sw;
   sw.Start();
+int count1=0; 
+int count2=0;
+int count3=0; 
+int ChTrig[10]={0,};
   for (Long64_t jentry=0; jentry<nentriesToCheck;jentry++)
   {
     
@@ -120,27 +121,32 @@ int count3=0;
     //=1.0 for real data
     double event_weight=1.0;
     
-    phoCandNum   = getPhoCandNum(175.0,1.4442);
-    phoCandNum_QCD = getPhoCandNum_QCDsideband(175.0,1.4442);
-    phoCandNum_QCDsbUp = getPhoCandNum_QCDsbUp(175.0,1.4442);
-    phoCandNum_QCDsbDown = getPhoCandNum_QCDsbDown(175.0,1.4442);
-    phoCandDen = getPhoCandDen(175.0,1.4442);
+    phoCandNum   = getPhoCandNum(220.0,1.4442);
+    phoCandNum_QCD = getPhoCandNum_QCDsideband(220.0,1.4442);
+    phoCandNum_QCDsbUp = getPhoCandNum_QCDsbUp(220.0,1.4442);
+    phoCandNum_QCDsbDown = getPhoCandNum_QCDsbDown(220.0,1.4442);
+    phoCandDen = getPhoCandDen(220.0,1.4442);
 
+
+if(metFilters==0)count1++;
+if(HLTPho>>11&1 == 1)count2++;
+if(pfMET < 30)count3++;
     //Sequential cuts
     //Systematics bins:
     //    0       1      2       3       4       5       6        7         8
     // Standard  sbUP  sbDown  metUP  metDown  binUP  binDown  sieieUp  sieieDown
-if(metFilters==0)count1++;
-if(HLTPho>>11&1 == 1)count2++;
-if(pfMET<30)count3++;
     if(metFilters==0)
     {
+
+//cout<<"met filter passed"<<endl;
 	          if(HLTPho>>11&1 == 1)
 //	          if(HLTPho>>12&1 == 1)
       {
+//cout<<"HLTPho filter passed"<<endl;
         if(pfMET < 30)
 
         {
+//cout<<"pfMET passed, - "<<event<<endl;
           if(phoCandNum.size() > 0)
           {
               fillHistosNum(0,phoCandNum[0],event_weight);
@@ -230,8 +236,7 @@ if(pfMET<30)count3++;
   std::cout<<"Total number of events: "<<nTotal<<std::endl;
   std::cout << "Number of events inspected: " << nTotal << std::endl;
   std::cout<<std::endl;
-
-cout<<"count 1 : "<<count1<<" , count 2 : "<<count2<<" , count 3 : "<<count3<<endl;
+cout<<"count 1 : "<<count1<<", count 2 : "<<count2<<", count 3 : "<<count3<<endl;
 }
 
 void postAnalyzer::BookHistos(const char* file2)
@@ -287,9 +292,9 @@ void postAnalyzer::fillHistosNum(int sysNumber, int index,int event_weight)
   h_phoPt_num_un[histoNumber][sysNumber]->Fill(uncorrectedPhoEt); //d0412 uncorrected
   h_pfMET_num[histoNumber][sysNumber]->Fill(pfMET,event_weight);
   
-  if(uncorrectedPhoEt > 175.0 && uncorrectedPhoEt <= 200.0)
+  if(uncorrectedPhoEt > 175.0 && uncorrectedPhoEt <= 220.0)
     histoNumber = 1;
-  else if(uncorrectedPhoEt > 200.0 && uncorrectedPhoEt <= 250.0)
+  else if(uncorrectedPhoEt > 220.0 && uncorrectedPhoEt <= 250.0)
     histoNumber = 2;
   else if(uncorrectedPhoEt > 250.0 && uncorrectedPhoEt <= 300.0)
     histoNumber = 3;
@@ -333,9 +338,9 @@ void postAnalyzer::fillHistosNum_QCD(int sysNumber, int index,int event_weight)
   h_phoPt_num_QCD_un[histoNumber][sysNumber]->Fill(uncorrectedPhoEt);
   h_pfMET_num_QCD[histoNumber][sysNumber]->Fill(pfMET,event_weight);
   
-  if(uncorrectedPhoEt > 175.0 && uncorrectedPhoEt <= 200.0)
+  if(uncorrectedPhoEt > 175.0 && uncorrectedPhoEt <= 220.0)
     histoNumber = 1;
-  else if(uncorrectedPhoEt > 200.0 && uncorrectedPhoEt <= 250.0)
+  else if(uncorrectedPhoEt > 220.0 && uncorrectedPhoEt <= 250.0)
     histoNumber = 2;
   else if(uncorrectedPhoEt > 250.0 && uncorrectedPhoEt <= 300.0)
     histoNumber = 3;
@@ -378,9 +383,9 @@ void postAnalyzer::fillHistosDen(int sysNumber, int index,int event_weight)
   h_phoPt_den[histoNumber][sysNumber]->Fill(uncorrectedPhoEt,event_weight);
   h_pfMET_den[histoNumber][sysNumber]->Fill(pfMET,event_weight);
   
-  if(uncorrectedPhoEt > 175.0 && uncorrectedPhoEt <= 200.0)
+  if(uncorrectedPhoEt > 175.0 && uncorrectedPhoEt <= 220.0)
     histoNumber = 1;
-  else if(uncorrectedPhoEt > 200.0 && uncorrectedPhoEt <= 250.0)
+  else if(uncorrectedPhoEt > 220.0 && uncorrectedPhoEt <= 250.0)
     histoNumber = 2;
   else if(uncorrectedPhoEt > 250.0 && uncorrectedPhoEt <= 300.0)
     histoNumber = 3;
@@ -423,14 +428,16 @@ std::vector<int> postAnalyzer::getPhoCandNum(double phoPtCut, double phoEtaCut){
     Float_t uncorrectedPhoEt = ((*phoSCRawE)[p]/TMath::CosH((*phoSCEta)[p]));
     bool kinematic = uncorrectedPhoEt > phoPtCut  && fabs((*phoSCEta)[p])<phoEtaCut;
     bool photonId = (
-         ((*phoHoverE)[p]                <  0.0232   ) && 			
+         ((*phoHoverE)[p]                <  0.02197   ) &&
          ((*phohasPixelSeed)[p]              ==  0      ) &&
-         ( TMath::Max( ( (*phoPFChIso)[p] - rho*EAcharged((*phoSCEta)[p]) ), 0.0) < 0.584 ) &&        
-         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (0.321 + (0.0112 * uncorrectedPhoEt) + (0.000028 * pow(uncorrectedPhoEt, 2.0))) )  &&
-         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.141 + (0.0043 * uncorrectedPhoEt)) ) 
+         ( TMath::Max( ( (*phoPFChIso)[p] - rho*EAcharged((*phoSCEta)[p]) ), 0.0) < 1.141) &&        
+         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (1.189 + (0.01512 * uncorrectedPhoEt) + (2.259e-05 * pow(uncorrectedPhoEt, 2.0))) )  &&
+         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.08 + (0.004017 * uncorrectedPhoEt)) ) 
+
     );
       
     bool noncoll = fabs((*phoSeedTime)[p]) < 3. && (*phoSigmaIEtaIEtaFull5x5)[p] > 0.001 && (*phoSigmaIPhiIPhiFull5x5)[p] > 0.001;
+
     if(photonId && kinematic && noncoll)
     {
       tmpCand.push_back(p);
@@ -451,13 +458,12 @@ std::vector<int> postAnalyzer::getPhoCandNum_QCDsideband(double phoPtCut, double
     Float_t uncorrectedPhoEt = ((*phoSCRawE)[p]/TMath::CosH((*phoSCEta)[p]));
     bool kinematic = uncorrectedPhoEt > phoPtCut  && fabs((*phoSCEta)[p])<phoEtaCut;
     bool photonId = (
-         ((*phoHoverE)[p]                <  0.0232   ) && 			
+         ((*phoHoverE)[p]                <  0.02197   ) &&
          ((*phohasPixelSeed)[p]              ==  0      ) &&
          ( TMath::Max( ( (*phoPFChIso)[p]  - rho*EAcharged((*phoSCEta)[p]) ), 0.0) > 8.0 )  &&  
          ( TMath::Max( ( (*phoPFChIso)[p]  - rho*EAcharged((*phoSCEta)[p]) ), 0.0) < 14.0 )  && 
-         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (0.321 + (0.0112 * uncorrectedPhoEt) + (0.000028 * pow(uncorrectedPhoEt, 2.0))) )  &&
-         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.141 + (0.0043 * uncorrectedPhoEt)) ) 
-
+         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (1.189 + (0.01512 * uncorrectedPhoEt) + (2.259e-05 * pow(uncorrectedPhoEt, 2.0))) )  &&
+         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.08 + (0.004017 * uncorrectedPhoEt)) ) 
 
     );
       
@@ -484,12 +490,12 @@ std::vector<int> postAnalyzer::getPhoCandNum_QCDsbUp(double phoPtCut, double pho
     Float_t uncorrectedPhoEt = ((*phoSCRawE)[p]/TMath::CosH((*phoSCEta)[p]));
     bool kinematic = uncorrectedPhoEt > phoPtCut  && fabs((*phoSCEta)[p])<phoEtaCut;
     bool photonId = (
-	 ((*phoHoverE)[p]                <  0.0232   ) && 			
+         ((*phoHoverE)[p]                <  0.02197   ) &&
          ((*phohasPixelSeed)[p]              ==  0      ) &&
          ( TMath::Max( ( (*phoPFChIso)[p]  - rho*EAcharged((*phoSCEta)[p]) ), 0.0) > 8.0 )  &&  
          ( TMath::Max( ( (*phoPFChIso)[p]  - rho*EAcharged((*phoSCEta)[p]) ), 0.0) < 16.0 )  && 
-         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (0.321 + (0.0112 * uncorrectedPhoEt) + (0.000028 * pow(uncorrectedPhoEt, 2.0))) )  &&
-         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.141 + (0.0043 * uncorrectedPhoEt)) ) 
+         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (1.189 + (0.01512 * uncorrectedPhoEt) + (2.259e-05 * pow(uncorrectedPhoEt, 2.0))) )  &&
+         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.08 + (0.004017 * uncorrectedPhoEt)) ) 
 
 
     );
@@ -517,12 +523,13 @@ std::vector<int> postAnalyzer::getPhoCandNum_QCDsbDown(double phoPtCut, double p
     Float_t uncorrectedPhoEt = ((*phoSCRawE)[p]/TMath::CosH((*phoSCEta)[p]));
     bool kinematic = uncorrectedPhoEt > phoPtCut  && fabs((*phoSCEta)[p])<phoEtaCut;
     bool photonId = (
-         ((*phoHoverE)[p]                <  0.0232   ) && 			
+         ((*phoHoverE)[p]                <  0.02197   ) &&
          ((*phohasPixelSeed)[p]              ==  0      ) &&
          ( TMath::Max( ( (*phoPFChIso)[p]  - rho*EAcharged((*phoSCEta)[p]) ), 0.0) > 8.0 )  &&  
          ( TMath::Max( ( (*phoPFChIso)[p]  - rho*EAcharged((*phoSCEta)[p]) ), 0.0) < 12.0 )  && 
-         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (0.321 + (0.0112 * uncorrectedPhoEt) + (0.000028 * pow(uncorrectedPhoEt, 2.0))) )  &&		
-         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.141 + (0.0043 * uncorrectedPhoEt)) ) 
+         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < (1.189 + (0.01512 * uncorrectedPhoEt) + (2.259e-05 * pow(uncorrectedPhoEt, 2.0))) )  &&
+         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < (2.08 + (0.004017 * uncorrectedPhoEt)) ) 
+
 
     );
       
@@ -564,6 +571,7 @@ std::vector<int> postAnalyzer::getPhoCandDen(double phoPtCut, double phoEtaCut){
         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < TMath::Min(5.0*(10.910 + (0.0148 * uncorrectedPhoEt) + (0.000028 * pow(uncorrectedPhoEt, 2.0))) , 0.20*uncorrectedPhoEt) )  &&
         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < TMath::Min(5.0*(3.630+ (0.0053 * uncorrectedPhoEt)) , 0.20*uncorrectedPhoEt) )
       );
+
       bool noncoll = fabs((*phoSeedTime)[p]) < 3. &&  (*phoSigmaIEtaIEtaFull5x5)[p] > 0.001 && (*phoSigmaIPhiIPhiFull5x5)[p] > 0.001;
 
       if(kinematic && photonID && noncoll)
@@ -593,19 +601,18 @@ std::vector<int> postAnalyzer::getPhoCandDen_noFailPhoIso(double phoPtCut, doubl
     bool passPhoIsoLoose = TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < 1.5*(0.81 + (0.0053 * (*phoEt)[p]));
 
     if(!passChIsoLoose || !passNeuIsoLoose || !passPhoIsoLoose)
+//    if(!passNeuIsoLoose || !passPhoIsoLoose)
     {
       bool kinematic = uncorrectedPhoEt > phoPtCut  && fabs((*phoSCEta)[p])<phoEtaCut;
       //"Very loose" ID cuts
       bool photonID = (
         ((*phoHoverE)[p]                <  0.05   ) &&
         ((*phohasPixelSeed)[p]              ==  0      ) &&
-//        ( TMath::Max( ( (*phoYuPFChWorstIso)[p]  - rho*EAchargedworst((*phoSCEta)[p]) ), 0.0) < TMath::Min(5.0*(3.32) , 0.20*uncorrectedPhoEt) )  &&
         ( TMath::Max( ( (*phoPFChIso)[p]  - rho*EAcharged((*phoSCEta)[p]) ), 0.0) < TMath::Min(5.0*(3.32) , 0.20*uncorrectedPhoEt) )  &&
         ( TMath::Max( ( (*phoPFNeuIso)[p] - rho*EAneutral((*phoSCEta)[p]) ), 0.0) < TMath::Min(5.0*(1.92 + (0.014 * uncorrectedPhoEt) + (0.000019 * pow(uncorrectedPhoEt, 2.0))) , 0.20*uncorrectedPhoEt) )  &&
         ( TMath::Max( ( (*phoPFPhoIso)[p] - rho*EAphoton((*phoSCEta)[p])  ), 0.0) < TMath::Min(5.0*(0.81+ (0.0053 * uncorrectedPhoEt)) , 0.20*uncorrectedPhoEt) )
       );
 
- //     bool noncoll = fabs((*phoSeedTime)[p]) < 3. && (*phoMIPTotEnergy)[p] < 4.9 && (*phoSigmaIEtaIEtaFull5x5)[p] > 0.001 && (*phoSigmaIPhiIPhiFull5x5)[p] > 0.001;
       bool noncoll = fabs((*phoSeedTime)[p]) < 3. && (*phoSigmaIEtaIEtaFull5x5)[p] > 0.001 && (*phoSigmaIPhiIPhiFull5x5)[p] > 0.001;
 
       if(kinematic && photonID && noncoll)
@@ -620,9 +627,6 @@ std::vector<int> postAnalyzer::getPhoCandDen_noFailPhoIso(double phoPtCut, doubl
 }
 
 // Effective area to be needed in PF Iso for photon ID
-
-
-//mod2
 
  Double_t postAnalyzer::EAcharged(Double_t eta){
    Float_t EffectiveArea = 0.0;
@@ -812,7 +816,7 @@ std::vector<int> postAnalyzer::JetVetoDecision(int pho_index) {
       if(pho_index>=0){
         deltar= dR(jetEta->at(i),jetPhi->at(i),phoSCEta->at(pho_index),phoSCPhi->at(pho_index));
       }
-      if(deltar>0.4 && jetPt->at(i) >30.0 && jetPUID->at(i)>value)
+      if(deltar>0.4 && jetPt->at(i) >30.0 /*&& jetPFLooseId->at(i)==1*/ && jetPUID->at(i)>value)
         {
           jetindex.push_back(i);
         }
